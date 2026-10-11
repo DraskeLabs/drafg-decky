@@ -1,8 +1,9 @@
 # DraFG for Decky
 
-A [Decky Loader](https://decky.xyz) plugin that controls
-[DraFG](https://store.steampowered.com/app/4934180) frame generation in SteamOS
-Game Mode from the Quick Access menu.
+[![draske.com][badge-site]][site] [![Discord][badge-discord]][discord] [![DraFG on Steam][badge-steam]][steam] [![X: @DraskeLabs][badge-x]][x]
+
+A [Decky Loader](https://decky.xyz) plugin that controls [DraFG][steam] frame
+generation in SteamOS Game Mode from the Quick Access menu.
 
 - **On/off** for frame generation while you play, with one status line: the
   game's frame rate, what DraFG shows, and the delay it adds
@@ -84,3 +85,12 @@ python3 -m unittest discover -s tests
 BSD 3-Clause, see [LICENSE](LICENSE). Based on the Decky plugin template;
 bundled third-party parts are listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 DraFG itself is separate, proprietary software sold on Steam.
+
+[site]: https://draske.com/
+[discord]: https://discord.com/invite/GMt2JHbdNR
+[steam]: https://store.steampowered.com/app/4934180/DraFG/
+[x]: https://x.com/DraskeLabs
+[badge-site]: https://img.shields.io/badge/draske.com-1E1A16?style=for-the-badge&logo=data:image/svg%2Bxml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjUuMyA1LjMgNTMuNCA1My40Ij48ZyBmaWxsPSIjRkZGRkZGIiBzdHJva2U9IiNGRkZGRkYiIHN0cm9rZS13aWR0aD0iMS40IiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cG9seWdvbiBvcGFjaXR5PSIwLjI1IiBwb2ludHM9IjI2LjIsNiA0NS44LDYuNSA0NS44LDQ4LjQgMjYuMiw0Ny45Ii8%2BPHBvbHlnb24gb3BhY2l0eT0iMC40IiBwb2ludHM9IjIyLjIsOC4xIDM5LjksMTYuMyAzOS45LDUyLjcgMjIuMiw0NC40Ii8%2BPHBvbHlnb24gb3BhY2l0eT0iMC42OCIgcG9pbnRzPSIxOC4yLDEwLjEgMzIsMjcuMiAzMiw1OCAxOC4yLDQwLjkiLz48L2c%2BPC9zdmc%2BCg==
+[badge-discord]: https://img.shields.io/badge/Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white
+[badge-steam]: https://img.shields.io/badge/DraFG_on_Steam-171A21?style=for-the-badge&logo=steam&logoColor=white
+[badge-x]: https://img.shields.io/badge/%40DraskeLabs-000000?style=for-the-badge&logo=x&logoColor=white
