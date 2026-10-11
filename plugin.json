@@ -1,0 +1,11 @@
+{
+  "name": "DraFG",
+  "author": "Draske",
+  "flags": [],
+  "api_version": 1,
+  "publish": {
+    "tags": ["frame-generation", "performance"],
+    "description": "Turn on DraFG frame generation in Game Mode and set it up from the Quick Access menu. Needs DraFG from Steam.",
+    "image": ""
+  }
+}
