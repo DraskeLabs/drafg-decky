@@ -13,8 +13,13 @@ import re
 from dataclasses import dataclass
 from typing import Iterator
 
-# DraFG's public Steam app ids: the store release first, then the Playtest.
-APP_IDS = (4934180, 5085100)
+# DraFG Demo, its own Steam app: DraFG itself keeps to the demo's limits and
+# says so in its status (`edition`, `options.max_multiplier`).
+DEMO_APP_ID: int | None = 5557000
+
+# DraFG's public Steam app ids, in the order the plugin prefers them: the
+# store release, the Playtest, then the demo.
+APP_IDS = (4934180, 5085100) + ((DEMO_APP_ID,) if DEMO_APP_ID else ())
 
 # The executable inside the install directory.
 EXECUTABLE = "drafg"

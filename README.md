@@ -43,7 +43,9 @@ This plugin is installed manually, not from the Decky store.
 
 **Updating:** Decky does not update plugins installed this way. Install again
 from the same link (it always gives the latest release); your settings are
-kept. If the panel says DraFG is older than the plugin, update DraFG in Steam.
+kept. The one exception is coming from 0.2.5: 1.0.0 starts on DraFG 1.0's
+defaults, as DraFG itself does, and keeps only whether frame generation was
+on. If the panel says DraFG is older than the plugin, update DraFG in Steam.
 
 ## Use
 

@@ -52,7 +52,7 @@ replies are single lines of JSON. Every request carries `"v": 2` and a
 
 | request | does |
 |---|---|
-| `{"v":2,"cmd":"hello"}` | protocol and DraFG version |
+| `{"v":2,"cmd":"hello"}` | protocol and DraFG version, and its `edition` (below) |
 | `{"v":2,"cmd":"status"}` | the status below |
 | `{"v":2,"cmd":"set", …}` | change one or more of the settings below |
 | `{"v":2,"cmd":"pause"}` | hide DraFG and stop generating, keep it running |
@@ -67,20 +67,21 @@ DraFG speaks: a lower one means DraFG is older than the plugin.
 
 | setting | values | default |
 |---|---|---|
-| `multiplier` | 2–16: at most this many times the game's frame rate (`output_fps` says what is shown) | 2 |
+| `multiplier` | 2–16: at most this many times the game's frame rate (`output_fps` says what is shown); DraFG Demo lowers anything above `options.max_multiplier` to it | 2 |
 | `resolution` | `"native"` (the game's own size) or one of `"640x360"`, `"854x480"`, `"960x540"`, `"1280x720"`, `"1280x800"`, `"1600x900"`, `"1920x1080"`, `"1920x1200"`, `"2560x1080"`, `"2560x1440"`, `"3440x1440"`, `"3840x2160"` | `"native"` |
 | `stats` | true / false: a small stats line in the corner | false |
-| `model` | `"max"`, or `"mobile"` (faster, interpolation only) | `"max"` |
-| `mode` | `"interpolate"`, or `"extrapolate"` (experimental, Max only) | `"interpolate"` |
+| `model` | `"max"`, or `"mobile"` (faster) | `"max"` |
+| `mode` | `"interpolate"`, or `"extrapolate"` (experimental) | `"interpolate"` |
 | `upscaler` | `"bilinear"`, `"bilinear_sharpen"`, `"fsr_edge"`, `"fsr"`: used below native | `"bilinear_sharpen"` |
 | `sharpness` | 0–1 | 0.8 |
 | `backend` | `"auto"`, `"vulkan_fast"`, `"vulkan"`, `"cuda"` (NVIDIA) | `"auto"` |
 | `matrix` | `"auto"`, `"on"`, `"off"`: matrix acceleration (Vulkan Fast) | `"auto"` |
 | `capture_memory` | `"fast"` (frames stay on the GPU) or `"compatible"` | `"fast"` |
 
-A `set` naming `"mobile"` with `"extrapolate"` (together, or one of them
-against the other in force) is refused, as is a backend this device does not
-have; nothing in that request is applied.
+A `set` naming a backend this device does not have is refused; nothing in
+that request is applied. Before 1.0, a `set` naming `"mobile"` with
+`"extrapolate"` (together, or one of them against the other in force) was
+refused too: Surge Mobile could not extrapolate until Surge 2.0.
 
 ### Status
 
@@ -88,7 +89,8 @@ have; nothing in that request is applied.
 {
   "v": 2, "ok": true,
   "state": "running",
-  "app_version": "0.2.5",
+  "app_version": "1.0.0",
+  "edition": "full",
   "settings": {"multiplier": 2, "resolution": "native", "stats": false,
                "model": "max", "mode": "interpolate", "upscaler": "bilinear_sharpen",
                "sharpness": 0.8, "backend": "auto", "matrix": "auto", "capture_memory": "fast"},
@@ -96,7 +98,8 @@ have; nothing in that request is applied.
   "options": {
     "resolutions": ["640x360", "854x480", "960x540", "1280x720"],
     "backends": [{"name": "vulkan_fast", "available": true}, {"name": "vulkan", "available": true}],
-    "matrix": "none"
+    "matrix": "none",
+    "max_multiplier": 16
   },
   "model": "DraFG 1.6 Surge Max (interp)",
   "game_app_id": 1687950,
@@ -133,6 +136,13 @@ DraFG adds no delay even if `added_ms` is not 0, so show no delay then.
 
 `refresh_hz` is the screen's refresh rate; `capture_hz`, `output_hz` and
 `generated_hz` are measured rates of captured, shown and generated frames.
+
+`edition` is `"full"`, or `"demo"` for DraFG Demo, its own Steam app (in
+`hello` too). The demo stops at `options.max_multiplier` (4; the full product
+says 16): a `set` above it, or `--multiplier` above it, runs at it, and
+`settings.multiplier` says so. The demo marks what it shows with "DraFG Demo"
+in a corner; the plugin draws nothing for that. Both fields are new in 1.0
+and absent before: treat a missing `max_multiplier` as 16.
 
 `backend` is the backend running (what `"auto"` chose). `options` says what
 this device offers: `backends` lists each backend this build has, with

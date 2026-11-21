@@ -14,6 +14,7 @@ import threading
 import decky  # provided by Decky Loader
 
 from drafg_decky.control import ControlError, validate_settings
+from drafg_decky import steam
 from drafg_decky.steam import find_drafg
 from drafg_decky.supervisor import Supervisor, clean_environment
 
@@ -32,6 +33,12 @@ DEFAULT_SETTINGS = {
 
 # Steam's own UI (app 769) is not a game: nothing to remember for it.
 STEAM_UI_APP_ID = 769
+
+# Where the settings are kept, in the plugin's settings folder. DraFG 1.0
+# starts everyone on its own defaults: what the plugin saved before it, in
+# `settings.json`, is not loaded, except whether frame generation was on.
+SETTINGS_FILE = "drafg_settings.json"
+OLD_SETTINGS_FILE = "settings.json"
 
 # While DraFG is not installed, the Steam libraries are looked at again this
 # often, so a DraFG installed after Decky loaded the plugin is found.
@@ -77,7 +84,7 @@ async def blocking(fn, *args):
 
 class Plugin:
     async def _main(self):
-        self.settings_path = os.path.join(decky.DECKY_PLUGIN_SETTINGS_DIR, "settings.json")
+        self.settings_path = os.path.join(decky.DECKY_PLUGIN_SETTINGS_DIR, SETTINGS_FILE)
         self.state = self._load()
         self.install = find_drafg(decky.DECKY_USER_HOME)
         self.supervisor = None
@@ -125,6 +132,15 @@ class Plugin:
 
     def _load(self) -> dict:
         state = {"enabled": False, "defaults": dict(DEFAULT_SETTINGS), "per_game": {}}
+        if not os.path.exists(self.settings_path):
+            # First start since 1.0: the defaults, and the switch as it was.
+            old = os.path.join(os.path.dirname(self.settings_path), OLD_SETTINGS_FILE)
+            try:
+                with open(old, encoding="utf-8") as f:
+                    state["enabled"] = json.load(f).get("enabled") is True
+            except (OSError, ValueError, AttributeError):
+                pass
+            return state
         try:
             with open(self.settings_path, encoding="utf-8") as f:
                 saved = json.load(f)
@@ -186,6 +202,8 @@ class Plugin:
         game = status.get("game_app_id") if status else None
         return {
             "installed": self.install is not None,
+            # The demo's slider stops at its limit before DraFG first says so.
+            "demo": self.install is not None and self.install.app_id == steam.DEMO_APP_ID,
             "enabled": self.state["enabled"],
             "running": bool(sup and sup.running()),
             "error": sup.last_error if sup else None,

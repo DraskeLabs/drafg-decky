@@ -86,6 +86,28 @@ class SteamLibraryTest(unittest.TestCase):
         make_library(self.main, 4934180, "DraFG", os.path.join(HERE, "fake_drafg.py"))
         self.assertEqual(steam.find_drafg(self.home).app_id, 4934180)
 
+    def test_finds_the_demo_last(self):
+        # DraFG Demo's own app id (a stand-in until Steamworks assigns it).
+        demo = 7777770
+        saved = (steam.DEMO_APP_ID, steam.APP_IDS)
+        steam.DEMO_APP_ID, steam.APP_IDS = demo, (4934180, 5085100, demo)
+        try:
+            make_library(self.card, demo, "DraFG Demo", os.path.join(HERE, "fake_drafg.py"))
+            found = steam.find_drafg(self.home)
+            self.assertEqual(found.app_id, demo)
+            self.assertTrue(found.executable.endswith("DraFG Demo/drafg"))
+            # The full product, when it is there too, wins.
+            make_library(self.main, 4934180, "DraFG", os.path.join(HERE, "fake_drafg.py"))
+            self.assertEqual(steam.find_drafg(self.home).app_id, 4934180)
+        finally:
+            steam.DEMO_APP_ID, steam.APP_IDS = saved
+
+    def test_no_demo_id_means_no_demo_search(self):
+        if steam.DEMO_APP_ID is None:
+            self.assertEqual(steam.APP_IDS, (4934180, 5085100))
+        else:
+            self.assertEqual(steam.APP_IDS[-1], steam.DEMO_APP_ID)
+
     def test_ignores_a_manifest_without_the_executable(self):
         make_library(self.main, 4934180, "DraFG", None)
         self.assertIsNone(steam.find_drafg(self.home))
@@ -127,6 +149,55 @@ class SettingsTest(unittest.TestCase):
         env = supervisor.clean_environment("/home/deck", "deck", "/run/user/1000")
         self.assertNotIn("LD_LIBRARY_PATH", env)
         self.assertEqual(env["XDG_RUNTIME_DIR"], "/run/user/1000")
+
+
+class SettingsFileTest(unittest.TestCase):
+    """DraFG 1.0 keeps the plugin's settings in a file of its own: what an
+    earlier plugin saved is not loaded, except whether frame generation was on."""
+
+    # What a 0.2 plugin saved: a tuned default and a game of its own.
+    OLD = ('{"enabled": true, "defaults": {"multiplier": 3, "model": "mobile"},'
+           ' "per_game": {"1091500": {"multiplier": 4}}}')
+
+    def load(self, files: dict) -> tuple:
+        import logging
+        import types
+
+        folder = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, folder)
+        for name, text in files.items():
+            with open(os.path.join(folder, name), "w") as f:
+                f.write(text)
+        decky = types.ModuleType("decky")
+        decky.logger = logging.getLogger("drafg-test")
+        with mock.patch.dict(sys.modules, {"decky": decky}), \
+                mock.patch.object(sys, "path", [os.path.join(HERE, "..")] + sys.path):
+            import main
+            plugin = main.Plugin()
+            plugin.settings_path = os.path.join(folder, main.SETTINGS_FILE)
+            return plugin._load(), main, folder
+
+    def test_settings_from_before_1_0_are_not_loaded(self):
+        state, main, folder = self.load({"settings.json": self.OLD})
+        self.assertEqual(state, {"enabled": True, "defaults": main.DEFAULT_SETTINGS, "per_game": {}})
+        with open(os.path.join(folder, "settings.json")) as f:
+            self.assertEqual(f.read(), self.OLD, "left as it was")
+        for old in ('{"enabled": false}', '{"enabled": "yes"}', "[true]", "{ not json"):
+            state, _, _ = self.load({"settings.json": old})
+            self.assertFalse(state["enabled"], old)
+
+    def test_settings_saved_since_1_0_are_loaded(self):
+        state, main, _ = self.load({
+            "settings.json": self.OLD,
+            "drafg_settings.json": '{"enabled": false, "defaults": {"multiplier": 4}, "per_game": {"70": {"stats": true}}}',
+        })
+        self.assertFalse(state["enabled"])
+        self.assertEqual(state["defaults"], dict(main.DEFAULT_SETTINGS, multiplier=4))
+        self.assertEqual(state["per_game"], {"70": {"stats": True}})
+
+    def test_a_first_install_starts_off(self):
+        state, main, _ = self.load({})
+        self.assertEqual(state, {"enabled": False, "defaults": main.DEFAULT_SETTINGS, "per_game": {}})
 
 
 def kill_leftovers(runtime: str) -> None:
@@ -679,7 +750,7 @@ class DeckyUnloadTest(unittest.TestCase):
         make_library(steam_dir, 4934180, "DraFG", os.path.join(HERE, "fake_drafg.py"))
         self.settings = os.path.join(self.dir, "settings")
         os.makedirs(self.settings)
-        with open(os.path.join(self.settings, "settings.json"), "w") as f:
+        with open(os.path.join(self.settings, "drafg_settings.json"), "w") as f:
             f.write('{"enabled": true}')
         self.runtime = os.path.join(self.dir, "run")
         os.makedirs(self.runtime)
@@ -707,7 +778,7 @@ class DeckyUnloadTest(unittest.TestCase):
             if turned_off:
                 os.kill(process.pid, signal.SIGUSR1)
                 while True:
-                    with open(os.path.join(self.settings, "settings.json")) as f:
+                    with open(os.path.join(self.settings, "drafg_settings.json")) as f:
                         if '"enabled": false' in f.read():
                             break
                     self.assertLess(time.monotonic(), deadline, "not turned off")
@@ -773,7 +844,7 @@ class LateInstallTest(unittest.TestCase):
         self.home = os.path.join(self.dir, "home")
         self.settings = os.path.join(self.dir, "settings")
         os.makedirs(self.settings)
-        with open(os.path.join(self.settings, "settings.json"), "w") as f:
+        with open(os.path.join(self.settings, "drafg_settings.json"), "w") as f:
             f.write('{"enabled": true}')
         self.runtime = os.path.join(self.dir, "run")
         os.makedirs(self.runtime)

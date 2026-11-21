@@ -1,6 +1,6 @@
 {
   "name": "drafg-decky",
-  "version": "0.2.5",
+  "version": "1.0.0",
   "description": "Decky Loader plugin that controls DraFG frame generation in SteamOS Game Mode",
   "type": "module",
   "scripts": {
